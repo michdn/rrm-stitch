@@ -17,6 +17,7 @@ pacman::p_load(
 ### Data in --------------------------------------------------------------------
 
 #binary treemap raster, mosaic from regions 1-6
+folder_tmr <- file.path("data", "region_treemap")
 tmr1 <- terra::rast(file.path(folder_tmr, "mosaic_r1-r6_treemap_mask.tif"))
 
 folder_wa <- file.path("data", "water_availability", "post_treatment_AET")
