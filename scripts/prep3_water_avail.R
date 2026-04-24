@@ -124,15 +124,18 @@ thin <- terra::merge(thinc_tm, thini_tm, algo = 2)
 terra::writeRaster(
   blc,
   file.path(folder_w_out, "undisturbed_west.tif"),
-  gdal = c("COMPRESS = DEFLATE")
+  gdal = c("COMPRESS = DEFLATE"),
+  overwrite = TRUE
 )
 terra::writeRaster(
   burn,
   file.path(folder_w_out, "rxfire_west.tif"),
-  gdal = c("COMPRESS = DEFLATE")
+  gdal = c("COMPRESS = DEFLATE"),
+  overwrite = TRUE
 )
 terra::writeRaster(
   thin,
   file.path(folder_w_out, "thin_west.tif"),
-  gdal = c("COMPRESS = DEFLATE")
+  gdal = c("COMPRESS = DEFLATE"),
+  overwrite = TRUE
 )

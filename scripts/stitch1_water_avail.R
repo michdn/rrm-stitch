@@ -17,7 +17,6 @@ pacman::p_load(
 folder_out <- file.path("data", "output", "water_availability")
 dir.create(folder_out, recursive = TRUE)
 
-
 ### Data in --------------------------------------------------------------------
 
 # Rasterized protected areas, status 1 or 2
@@ -55,3 +54,15 @@ terra::writeRaster(
 #treat1 <- terra::rast(file.path(folder_out, "AET_legalmax_allpixels.tif"))
 
 #difference raster (treated versus untreated/baseline)
+# if treated was 50, and baseline 100, then diff is 50-100 = -50
+diff <- treat1 - blc
+
+varnames(diff) <- "AET_difference"
+names(diff) <- "AET_difference"
+
+terra::writeRaster(
+  diff,
+  file.path(folder_out, "AET_legalmax_difference_allpixels.tif"),
+  gdal = c("COMPRESS = DEFLATE"),
+  overwrite = TRUE
+)
