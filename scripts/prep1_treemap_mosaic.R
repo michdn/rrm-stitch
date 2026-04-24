@@ -22,29 +22,46 @@ pacman::p_load(
 
 # Treemap pixels in region
 folder_tmr <- file.path("data", "region_treemap")
-files_tmr <- list.files(folder_tmr, pattern = "*\\.tif$", full.names = TRUE)
+files_tmr <- list.files(
+  folder_tmr,
+  pattern = "PC612_R[0-9]?_treemap_5070\\.tif$",
+  full.names = TRUE
+)
 
 ### Mosaic ---------------------------------------------------------------------
 
-tmr_sprc <- terra::sprc(files_tmr)
+# Region 5 has very large extent, (covering Hawaii?),
+#  want to trim off NAs in that direction, but cannot use trim(trim_sprc)
+#  because region 3 rasters have NA rows at bottom, so need to keep that
+#  to prevent extent from being too small and not matching later in processing.
+# sprc are not subsettable, so must handle before sprc()
 
-#R5 has very large extent to the west (Hawaii?) but no values
-# (and we are only doing CONUS), so will need to trim
+r5_raw <- files_tmr %>% grep(pattern = "R5", value = TRUE) %>% terra::rast()
+r5 <- trim(r5_raw, padding = 1, value = NA)
+
+# spatrastercollection is very difficult to manipulate
+#  choices were to do two merges (?) or handle individual rasters
+r1 <- files_tmr %>% grep(pattern = "R1", value = TRUE) %>% terra::rast()
+r2 <- files_tmr %>% grep(pattern = "R2", value = TRUE) %>% terra::rast()
+r3 <- files_tmr %>% grep(pattern = "R3", value = TRUE) %>% terra::rast()
+r4 <- files_tmr %>% grep(pattern = "R4", value = TRUE) %>% terra::rast()
+r6 <- files_tmr %>% grep(pattern = "R6", value = TRUE) %>% terra::rast()
+
+#tmr_sprc <- terra::sprc(files_tmr)
+tmr_sprc <- terra::sprc(r1, r2, r3, r4, r5, r6)
 
 #Values do not matter, so do not need to worry about overlaps if they even exist,
 # can just fast merge algo=2. They have same origin, resolution, CRS, etc.
 tmr_raw <- terra::merge(tmr_sprc, algo = 2)
-tmr <- terra::trim(tmr_raw, padding = 1, value = NA)
 
 #make binary version
-tmr1 <- terra::ifel(!is.na(tmr), 1, NA)
+tmr1 <- terra::ifel(!is.na(tmr_raw), 1, NA)
 
-#save out both (though mostly interested in binary tmr1)
+names(tmr1) <- "treemap_coverage"
+varnames(tmr1) <- "treemap_coverage"
+
+#save out
 terra::writeRaster(
   tmr1,
   file.path(folder_tmr, "mosaic_r1-r6_treemap_mask.tif")
-)
-terra::writeRaster(
-  tmr,
-  file.path(folder_tmr, "mosaic_r1-r6_treemap_rawvalues.tif")
 )
