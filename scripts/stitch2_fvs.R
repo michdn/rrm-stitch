@@ -17,7 +17,9 @@ pacman::p_load(
 
 # Regions 1 - 6 possible
 # Regions drive the outer loop
-regions_to_run <- c(1, 2, 3, 4, 5, 6)
+# 1 & 2 done, 6 hours.
+# 4-6 done, 9 hours.
+regions_to_run <- c(3)
 
 # FVS variables to run
 # variable are inner loop
@@ -132,6 +134,15 @@ for (i in seq_along(regions_to_run)) {
   ))
   this_pad <- terra::crop(pad12_r, eg_reg_raster)
 
+  #Region 3 was rerun and has a larger extent than the original treemap
+  #  raster that was used to rasterize the protected areas (pad12_r),
+  #  however, there is no data in the 'missing' southern portion
+  #   ext(-1747020, -616680, 991710, 991800)
+  # So we can simply extend this_pad so that extents match and continue
+  if (this_reg == 3) {
+    this_pad <- terra::extend(this_pad, eg_reg_raster)
+  }
+
   #first inner loop on variable
   for (j in seq_along(vars_to_run)) {
     this_var <- vars_to_run[[j]]
@@ -184,7 +195,6 @@ for (i in seq_along(regions_to_run)) {
         "_",
         this_var
       )
-      #FIXME keep FVS var name??
       names(this_legalmax) <- this_out_name
       varnames(this_legalmax) <- this_out_name
       terra::writeRaster(
@@ -212,11 +222,14 @@ for (i in seq_along(regions_to_run)) {
         )
       ))
       # IF REGION 3
-      #baseline was run with a buffer, so need to strip out
+      #baseline was run with a buffer, so want to strip out
+      # technically not necessary, since it seems the extents are the same
+      # and buffer pixels will naturally fall out with subtraction
+      # however, just in case there are / will be extent issues,
+      # the crop & mask step below is retained for robustness
       if (this_reg == 3) {
         #mask baseline with legalmax
-        #FIXME test me and remove "2"
-        this_baseline2 <- terra::crop(this_baseline, this_legalmax, mask = TRUE)
+        this_baseline <- terra::crop(this_baseline, this_legalmax, mask = TRUE)
       }
 
       #difference raster (treated versus untreated/baseline)
@@ -230,9 +243,8 @@ for (i in seq_along(regions_to_run)) {
         "_",
         this_var
       )
-      #FIXME keep FVS layer name??
-      #names(this_diff) <- this_diff_out_name
-      #varnames(this_diff) <- this_diff_out_name
+      names(this_diff) <- this_diff_out_name
+      varnames(this_diff) <- this_diff_out_name
       terra::writeRaster(
         this_diff,
         file.path(

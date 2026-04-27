@@ -237,3 +237,4 @@ readr::write_csv(
 
 end_time <- Sys.time()
 (end_time - start_time)
+#9 hours
