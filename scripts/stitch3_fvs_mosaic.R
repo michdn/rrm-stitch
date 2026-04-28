@@ -1,11 +1,10 @@
 # after stitching fvs region results
 # for each variable-year combination:
 # mosaic diff together
-# (mosaic legalmax together if wanted/QA?)
+# (mosaic legalmax together if wanted/QA)
 
-#FIXME handle region 3 weirdness with buffered baseline!
+# 20 hours for both mosaics, 5 years, 5 variables. (~22min per raster)
 
-# CREATE BINARY FVS MASK FOR WATER
 if (!require("pacman")) {
   install.packages("pacman")
 }
@@ -15,6 +14,11 @@ pacman::p_load(
 )
 
 ### Settings -------------------------------------------------------------------
+
+# Mosaic (merge) which of the region results?
+# "legalmax" is the stitched treatment results
+# "diff" is the subtracted layer: legalmax - baseline
+which_mosaic <- c("legalmax", "diff")
 
 # FVS variables to run
 vars_to_run <- c(
@@ -30,9 +34,47 @@ years_to_run <- c(2026, 2031, 2036, 2041, 2046)
 
 #output folders
 folder_out <- file.path("data", "output", "fvs_mosaic")
-dir.create(folder_out, recursive = TRUE)
+folder_logs <- file.path(folder_out, "logs")
+dir.create(folder_logs, recursive = TRUE)
 
+#timestamp
+stamp <- format(Sys.time(), "%Y%m%d%H%M")
 
+#set up logging
+log_setup <- tibble::tribble(
+  ~var_name          , ~var_value                               ,
+  "variables_to_run" , paste0(vars_to_run, "", collapse = ",")  ,
+  "years_to_run"     , paste0(years_to_run, "", collapse = ",") ,
+  "timestamp"        , stamp
+)
+readr::write_csv(
+  log_setup,
+  file = file.path(folder_logs, paste0("log_", stamp, "_setup.csv"))
+)
+
+### Data in --------------------------------------------------------------------
+
+if ("diff" %in% which_mosaic) {
+  folder_diff <- file.path("data", "output", "fvs_region", "fvs_treatdiff")
+}
+
+if ("legalmax" %in% which_mosaic) {
+  folder_lm <- file.path("data", "output", "fvs_region", "fvs_legalmax")
+  folder_out_lm <- file.path(folder_out, "legalmax")
+  dir.create(folder_out_lm, recursive = TRUE)
+}
+
+### Loop -----------------------------------------------------------------------
+
+#total number of variables - years that will be run
+# NOTE: not exactly number of layers, since not looking at how many mosaics
+#  (legalmax and/or difference layers)
+total_layer_count <- length(vars_to_run) * length(years_to_run)
+#dedicated indexer (could have done fancy math, but this is easier)
+idx <- 0 #start at 0, will be adding 1 before first write
+log_collector <- vector("list", length = total_layer_count)
+
+(start_time <- Sys.time())
 for (v in seq_along(vars_to_run)) {
   this_var <- vars_to_run[[v]]
 
@@ -53,12 +95,142 @@ for (v in seq_along(vars_to_run)) {
 
     this_year <- years_to_run[[y]]
 
-    #TODO
+    #log and update to console
+    start_time_year <- Sys.time()
+    print(paste0(
+      "Starting ",
+      this_year,
+      " at ",
+      start_time_layer,
+      " for ",
+      length(which_mosaic),
+      " mosiac(s)."
+    ))
+
     # get all six region difference layers
     # for this variable and year combination
-    #TODO
-    # Mosaic via faster merge (no overlap) with algo 2
-    #TODO
-    # Save out
-  }
-}
+    if ("diff" %in% which_mosaic) {
+      this_diff_partname <- paste0(
+        "_difference_",
+        this_year,
+        "_",
+        this_var
+      )
+      this_diffs_files <- list.files(
+        path = folder_diff,
+        pattern = paste0("PC612_R[0-9]?", this_diff_partname, "\\.tif$"),
+        full.names = TRUE,
+        #search all region subfolders
+        recursive = TRUE
+      )
+      #need all 6 regions
+      if (!length(this_diffs_files) == 6) {
+        stop(paste0(
+          "Incorrect number of region files found: ",
+          length(this_diffs_files),
+          " instead of 6."
+        ))
+      }
+      #create sprc (different extents okay) for merging
+      this_sprc <- terra::sprc(this_diffs_files)
+      #mosaic via faster merge (no overlap) with algo 2
+      #18.5 min per layer (w/Chrome running on puffin)
+      this_mosaic <- terra::merge(this_sprc, algo = 2)
+
+      #save
+      this_diff_mos_name <- paste0(
+        "Difference_",
+        this_year,
+        "_",
+        this_var
+      )
+      names(this_mosaic) <- this_diff_mos_name
+      varnames(this_mosaic) <- this_diff_mos_name
+      terra::writeRaster(
+        this_mosaic,
+        file.path(
+          folder_out,
+          paste0(this_diff_mos_name, ".tif")
+        ),
+        gdal = c("COMPRESS = DEFLATE"),
+        overwrite = TRUE
+      )
+    } # end if difference mosaic
+
+    if ("legalmax" %in% which_mosaic) {
+      this_lm_partname <- paste0(
+        "_legalmax_",
+        this_year,
+        "_",
+        this_var
+      )
+      this_lms_files <- list.files(
+        path = folder_lm,
+        pattern = paste0("PC612_R[0-9]?", this_lm_partname, "\\.tif$"),
+        full.names = TRUE,
+        #search all region subfolders
+        recursive = TRUE
+      )
+      #need all 6 regions
+      if (!length(this_lms_files) == 6) {
+        stop(paste0(
+          "Incorrect number of region files found: ",
+          length(this_lms_files),
+          " instead of 6."
+        ))
+      }
+      #create sprc (different extents okay) for merging
+      this_sprc_lm <- terra::sprc(this_lms_files)
+      #mosaic via faster merge (no overlap) with algo 2
+      this_mosaic_lm <- terra::merge(this_sprc_lm, algo = 2)
+
+      #save
+      this_lm_mos_name <- paste0(
+        "Legalmax_",
+        this_year,
+        "_",
+        this_var
+      )
+      names(this_mosaic_lm) <- this_lm_mos_name
+      varnames(this_mosaic_lm) <- this_lm_mos_name
+      terra::writeRaster(
+        this_mosaic_lm,
+        file.path(
+          folder_out_lm,
+          paste0(this_lm_mos_name, ".tif")
+        ),
+        gdal = c("COMPRESS = DEFLATE"),
+        overwrite = TRUE
+      )
+    } # end if legalmax
+    end_time_layer <- Sys.time()
+
+    #logging
+    idx <- idx + 1
+    log_collector[[idx]] <-
+      tibble::tibble(
+        variable = this_var,
+        year = this_year,
+        start_layer = start_time_layer %>% format(),
+        end_layer = end_time_layer %>% format(),
+        elapsed_layer_minutes = difftime(
+          end_time_layer,
+          start_time_layer,
+          units = c("mins")
+        )
+      )
+  } # end years loop
+} # end variables loop
+
+#write layer run log
+log_per_rvy <- dplyr::bind_rows(log_collector)
+readr::write_csv(
+  log_per_rvy,
+  file = file.path(
+    folder_logs,
+    paste0("log_", stamp, "_var_year_runtime.csv")
+  )
+)
+
+end_time <- Sys.time()
+(end_time - start_time)
