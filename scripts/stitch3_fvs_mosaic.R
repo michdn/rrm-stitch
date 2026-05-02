@@ -3,7 +3,7 @@
 # mosaic diff together
 # (mosaic legalmax together if wanted/QA)
 
-# 20 hours for both mosaics, 5 years, 5 variables. (~22min per raster)
+# 20 hours for 2 mosaics, 5 years, 5 variables. (~22min per raster)
 
 if (!require("pacman")) {
   install.packages("pacman")
@@ -18,7 +18,9 @@ pacman::p_load(
 # Mosaic (merge) which of the region results?
 # "legalmax" is the stitched treatment results
 # "diff" is the subtracted layer: legalmax - baseline
-which_mosaic <- c("legalmax", "diff")
+# "baseline" is the baseline layers (note: works from base FVS results not any intermediate!)
+# c("legalmax", "diff", "baseline")
+which_mosaic <- c("baseline")
 
 # FVS variables to run
 vars_to_run <- c(
@@ -56,6 +58,8 @@ readr::write_csv(
 
 if ("diff" %in% which_mosaic) {
   folder_diff <- file.path("data", "output", "fvs_region", "fvs_treatdiff")
+  folder_out_diff <- file.path(folder_out, "difference")
+  dir.create(folder_out_diff, recursive = TRUE)
 }
 
 if ("legalmax" %in% which_mosaic) {
@@ -64,11 +68,18 @@ if ("legalmax" %in% which_mosaic) {
   dir.create(folder_out_lm, recursive = TRUE)
 }
 
+if ("baseline" %in% which_mosaic) {
+  folder_bl <- file.path("data", "output", "fvs_region", "fvs_baseline")
+  folder_out_bl <- file.path(folder_out, "baseline")
+  dir.create(folder_out_bl, recursive = TRUE)
+}
+
+
 ### Loop -----------------------------------------------------------------------
 
 #total number of variables - years that will be run
-# NOTE: not exactly number of layers, since not looking at how many mosaics
-#  (legalmax and/or difference layers)
+# NOTE: not accurately number of "layers", since not looking at how many mosaics
+#  (legalmax and/or difference and/or baseline layers)
 total_layer_count <- length(vars_to_run) * length(years_to_run)
 #dedicated indexer (could have done fancy math, but this is easier)
 idx <- 0 #start at 0, will be adding 1 before first write
@@ -149,7 +160,7 @@ for (v in seq_along(vars_to_run)) {
       terra::writeRaster(
         this_mosaic,
         file.path(
-          folder_out,
+          folder_out_diff,
           paste0(this_diff_mos_name, ".tif")
         ),
         gdal = c("COMPRESS = DEFLATE"),
@@ -203,6 +214,54 @@ for (v in seq_along(vars_to_run)) {
         overwrite = TRUE
       )
     } # end if legalmax
+
+    #should have made this a function
+    if ("baseline" %in% which_mosaic) {
+      this_bl_partname <- paste0(
+        "_baseline_",
+        this_year,
+        "_",
+        this_var
+      )
+      this_bls_files <- list.files(
+        path = folder_bl,
+        pattern = paste0("PC612_R[0-9]?", this_bl_partname, "\\.tif$"),
+        full.names = TRUE,
+        #search all region subfolders
+        recursive = TRUE
+      )
+      #need all 6 regions
+      if (!length(this_bls_files) == 6) {
+        stop(paste0(
+          "Incorrect number of region files found: ",
+          length(this_bls_files),
+          " instead of 6."
+        ))
+      }
+      #create sprc (different extents okay) for merging
+      this_sprc_bl <- terra::sprc(this_bls_files)
+      #mosaic via faster merge (no overlap) with algo 2
+      this_mosaic_bl <- terra::merge(this_sprc_bl, algo = 2)
+
+      #save
+      this_bl_mos_name <- paste0(
+        "Baseline_",
+        this_year,
+        "_",
+        this_var
+      )
+      names(this_mosaic_bl) <- this_bl_mos_name
+      varnames(this_mosaic_bl) <- this_bl_mos_name
+      terra::writeRaster(
+        this_mosaic_bl,
+        file.path(
+          folder_out_bl,
+          paste0(this_bl_mos_name, ".tif")
+        ),
+        gdal = c("COMPRESS = DEFLATE"),
+        overwrite = TRUE
+      )
+    } # end if baseline
     end_time_layer <- Sys.time()
 
     #logging
