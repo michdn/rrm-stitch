@@ -21,16 +21,16 @@ regions_to_run <- c(1, 2, 3, 4, 5, 6)
 # FVS variables to run
 # variable are inner loop
 vars_to_run <- c(
-  "aboveground_total_live",
+  #"aboveground_total_live",
   "mcuft",
-  "pot_smoke_sev",
-  "tcuft",
-  "tot_flame_sev"
+  #"pot_smoke_sev",
+  "tcuft" #,
+  #"tot_flame_sev"
 )
 
 # Years to run
 # Secondary inner loop after variable
-years_to_run <- c(2026, 2031, 2036, 2041, 2046)
+years_to_run <- c(2026) #, 2031, 2036, 2041, 2046)
 
 #output folder for combined thin-treatment rasters
 folder_out_base <- file.path("data", "fvs_thin123")
@@ -104,7 +104,7 @@ for (i in seq_along(regions_to_run)) {
     #  Since a variable number of thin treatments, cannot move 0 to a new value
     #   without great difficulty
     # Choice is either 1) shift everything +1, or
-    #  2) drop 0 values, and then cover() with either thin-1 or baseline at end
+    #  2) drop 0 values, and then cover() with thin-1 (anything) at end
     # Chose option 2.
     this_guide <- terra::mask(
       this_guide,
@@ -191,7 +191,7 @@ for (i in seq_along(regions_to_run)) {
         names(thin_filled) <- names(this_thin_stack[[1]])
         #Save out
         terra::writeRaster(
-          thin_combined,
+          thin_filled,
           file.path(this_folder_out, tx_tif),
           gdal = c("COMPRESS = DEFLATE"),
           overwrite = TRUE

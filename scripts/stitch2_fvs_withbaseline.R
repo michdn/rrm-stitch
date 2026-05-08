@@ -5,6 +5,11 @@
 
 # Uses combined thin results from prep4_fvs_thin_combine.R
 
+# 5 variables, 5 years. no baseline consistency:
+# 1 & 2 done, 6 hours.
+# 4-6 done, 9 hours.
+# 3 variables, w/ baseline. 5 regions, 5, years: 15 hours.
+
 if (!require("pacman")) {
   install.packages("pacman")
 }
@@ -21,23 +26,21 @@ save_baseline <- TRUE
 
 # Regions 1 - 6 possible
 # Regions drive the outer loop
-# 1 & 2 done, 6 hours.
-# 4-6 done, 9 hours.
 regions_to_run <- c(1:6)
 
 # FVS variables to run
 # variable are inner loop
 vars_to_run <- c(
-  "aboveground_total_live",
+  #"aboveground_total_live",
   "mcuft",
-  "pot_smoke_sev",
-  "tcuft",
-  "tot_flame_sev"
+  #"pot_smoke_sev",
+  "tcuft" #,
+  #"tot_flame_sev"
 )
 
 # Years to run
 # Secondary inner loop after variable
-years_to_run <- c(2026, 2031, 2036, 2041, 2046)
+years_to_run <- c(2026) #, 2031, 2036, 2041, 2046)
 
 #output folders
 folder_out_base <- file.path("data", "output", "fvs_region")
@@ -110,20 +113,14 @@ for (i in seq_along(regions_to_run)) {
     "fvs_legalmax",
     this_projreg_name
   )
-  # dir.create(this_folder_out_lm, recursive = TRUE, showWarnings = FALSE)
-  # this_folder_out_diff <- file.path(
-  #   folder_out_base,
-  #   "fvs_treatdiff",
-  #   this_projreg_name
-  # )
-  # dir.create(this_folder_out_diff, recursive = TRUE, showWarnings = FALSE)
+  dir.create(this_folder_out_lm, recursive = TRUE, showWarnings = FALSE)
   if (save_baseline) {
-    this_folder_out_base <- file.path(
+    this_folder_out_bl <- file.path(
       folder_out_base,
       "fvs_baseline",
       this_projreg_name
     )
-    dir.create(this_folder_out_base, recursive = TRUE, showWarnings = FALSE)
+    dir.create(this_folder_out_bl, recursive = TRUE, showWarnings = FALSE)
   }
 
   # Pull an example raster to crop pad12_r to this region
@@ -219,75 +216,26 @@ for (i in seq_along(regions_to_run)) {
         overwrite = TRUE
       )
 
-      # Subtract baseline
-      # get baseline
+      # Get baseline
       this_baseline <- terra::rast(file.path(
         this_folder_fvs,
         "spat_baseline",
         paste0(
           this_projreg_name,
           "_Baseline_",
-          eg_year,
+          this_year,
           "_",
-          eg_var,
+          this_var,
           ".tif"
         )
       ))
-      # # IF REGION 3
-      # #baseline was run with a buffer, so want to strip out
-      # # technically not necessary, since it seems the extents are the same
-      # # and buffer pixels will naturally fall out with subtraction
-      # # however, just in case there are / will be extent issues,
-      # # the crop & mask step below is retained for robustness
-      # if (this_reg == 3) {
-      #   #mask baseline with legalmax
-      #   this_baseline <- terra::crop(this_baseline, this_legalmax, mask = TRUE)
-      # }
 
-      #As baseline is now used directly, masking to legalmax
-      # and then vice versa so that pixels remain consistent between
-      # treated and baseline layers
+      # Region 3 Baseline was run with a buffer, so want to strip out
+      # but also want to make sure pixels are consistent between legalmax and baseline
+      # Mask baseline to legalmax
+      # and then vice versa so that pixels remain consistent
       this_baseline <- terra::crop(this_baseline, this_legalmax, mask = TRUE)
       this_legalmax <- terra::crop(this_legalmax, this_baseline, mask = TRUE)
-
-      #       #TESTING
-      # this_baseline2 <- terra::crop(this_baseline, this_legalmax, mask = TRUE)
-      # this_legalmax2 <- terra::crop(this_legalmax, this_baseline2, mask = TRUE)
-      # global(this_baseline, fun = "notNA")
-      # #                                                   notNA
-      # # PC612_R1_Baseline_2026_aboveground_total_live 134703148
-      # global(this_legalmax, fun = "notNA")
-      # #                                                  notNA
-      # # PC612_R1_legalmax_2026_aboveground_total_live 99631892
-      # global(this_baseline2, fun = "notNA")
-      # #                                                  notNA
-      # # PC612_R1_Baseline_2026_aboveground_total_live 99550534
-      # global(this_legalmax2, fun = "notNA")
-      # #                                                  notNA
-      # # PC612_R1_legalmax_2026_aboveground_total_live 99550534
-
-      ## Difference layer was not actually wanted
-      # #difference raster (treated versus untreated/baseline)
-      # # if treated was 50, and baseline 100, then diff is 50-100 = -50
-      # #this_diff <- this_legalmax - this_baseline
-      # this_diff_out_name <- paste0(
-      #   this_projreg_name,
-      #   "_difference_",
-      #   this_year,
-      #   "_",
-      #   this_var
-      # )
-      # names(this_diff) <- this_diff_out_name
-      # varnames(this_diff) <- this_diff_out_name
-      # terra::writeRaster(
-      #   this_diff,
-      #   file.path(
-      #     this_folder_out_diff,
-      #     paste0(this_diff_out_name, ".tif")
-      #   ),
-      #   gdal = c("COMPRESS = DEFLATE"),
-      #   overwrite = TRUE
-      # )
 
       if (save_baseline) {
         this_base_out_name <- paste0(
@@ -302,7 +250,7 @@ for (i in seq_along(regions_to_run)) {
         terra::writeRaster(
           this_baseline,
           file.path(
-            this_folder_out_base,
+            this_folder_out_bl,
             paste0(this_base_out_name, ".tif")
           ),
           gdal = c("COMPRESS = DEFLATE"),

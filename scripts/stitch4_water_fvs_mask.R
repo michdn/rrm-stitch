@@ -22,12 +22,11 @@ aet <- terra::rast(file.path(
   "AET_legalmax_difference_allpixels.tif"
 ))
 
-#Where the final FVS difference (treated & baseline) rasters live
+#Where final treated & baseline rasters live
 folder_mos <- file.path("data", "output", "fvs_mosaic")
-# FVS final result to use
-fvs_file <- "Difference_2026_aboveground_total_live.tif"
-
-fvs <- terra::rast(file.path(folder_mos, fvs_file))
+# A final FVS final result to use
+fvs_file <- "Baseline_2026_aboveground_total_live.tif"
+fvs <- terra::rast(file.path(folder_mos, "baseline", fvs_file))
 
 ### Extents --------------------------------------------------------------------
 
@@ -70,7 +69,7 @@ terra::writeRaster(
   aet_masked,
   file.path(
     folder_wa,
-    paste0("AET_legalmax_difference_fvsmasked.tif")
+    "AET_legalmax_difference_fvsmasked.tif"
   ),
   gdal = c("COMPRESS = DEFLATE"),
   overwrite = TRUE

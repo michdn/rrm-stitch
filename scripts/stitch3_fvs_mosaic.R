@@ -17,22 +17,23 @@ pacman::p_load(
 
 # Mosaic (merge) which of the region results?
 # "legalmax" is the stitched treatment results
-# "diff" is the subtracted layer: legalmax - baseline
-# "baseline" is the baseline layers (note: works from base FVS results not any intermediate!)
-# c("legalmax", "diff", "baseline")
-which_mosaic <- c("baseline")
+# "diff" is the subtracted layer: legalmax - baseline. DEPRECATED.
+# "baseline" is the baseline layers (from pixel matched/consistent intermediates)
+# c("legalmax", "baseline")
+which_mosaic <- c("baseline", "legalmax")
 
 # FVS variables to run
 vars_to_run <- c(
-  "aboveground_total_live",
+  #"aboveground_total_live",
   "mcuft",
-  "pot_smoke_sev",
-  "tcuft",
-  "tot_flame_sev"
+  #"pot_smoke_sev",
+  "tcuft" #,
+  #"tot_flame_sev"
 )
 
 # Years to run
-years_to_run <- c(2026, 2031, 2036, 2041, 2046)
+#c(2026, 2031, 2036, 2041, 2046)
+years_to_run <- c(2026)
 
 #output folders
 folder_out <- file.path("data", "output", "fvs_mosaic")
@@ -56,11 +57,11 @@ readr::write_csv(
 
 ### Data in --------------------------------------------------------------------
 
-if ("diff" %in% which_mosaic) {
-  folder_diff <- file.path("data", "output", "fvs_region", "fvs_treatdiff")
-  folder_out_diff <- file.path(folder_out, "difference")
-  dir.create(folder_out_diff, recursive = TRUE)
-}
+# if ("diff" %in% which_mosaic) {
+#   folder_diff <- file.path("data", "output", "fvs_region", "fvs_treatdiff")
+#   folder_out_diff <- file.path(folder_out, "difference")
+#   dir.create(folder_out_diff, recursive = TRUE)
+# }
 
 if ("legalmax" %in% which_mosaic) {
   folder_lm <- file.path("data", "output", "fvs_region", "fvs_legalmax")
@@ -118,55 +119,55 @@ for (v in seq_along(vars_to_run)) {
       " mosiac(s)."
     ))
 
-    # get all six region difference layers
-    # for this variable and year combination
-    if ("diff" %in% which_mosaic) {
-      this_diff_partname <- paste0(
-        "_difference_",
-        this_year,
-        "_",
-        this_var
-      )
-      this_diffs_files <- list.files(
-        path = folder_diff,
-        pattern = paste0("PC612_R[0-9]?", this_diff_partname, "\\.tif$"),
-        full.names = TRUE,
-        #search all region subfolders
-        recursive = TRUE
-      )
-      #need all 6 regions
-      if (!length(this_diffs_files) == 6) {
-        stop(paste0(
-          "Incorrect number of region files found: ",
-          length(this_diffs_files),
-          " instead of 6."
-        ))
-      }
-      #create sprc (different extents okay) for merging
-      this_sprc <- terra::sprc(this_diffs_files)
-      #mosaic via faster merge (no overlap) with algo 2
-      #18.5 min per layer (w/Chrome running on puffin)
-      this_mosaic <- terra::merge(this_sprc, algo = 2)
+    # # get all six region difference layers
+    # # for this variable and year combination
+    # if ("diff" %in% which_mosaic) {
+    #   this_diff_partname <- paste0(
+    #     "_difference_",
+    #     this_year,
+    #     "_",
+    #     this_var
+    #   )
+    #   this_diffs_files <- list.files(
+    #     path = folder_diff,
+    #     pattern = paste0("PC612_R[0-9]?", this_diff_partname, "\\.tif$"),
+    #     full.names = TRUE,
+    #     #search all region subfolders
+    #     recursive = TRUE
+    #   )
+    #   #need all 6 regions
+    #   if (!length(this_diffs_files) == 6) {
+    #     stop(paste0(
+    #       "Incorrect number of region files found: ",
+    #       length(this_diffs_files),
+    #       " instead of 6."
+    #     ))
+    #   }
+    #   #create sprc (different extents okay) for merging
+    #   this_sprc <- terra::sprc(this_diffs_files)
+    #   #mosaic via faster merge (no overlap) with algo 2
+    #   #18.5 min per layer (w/Chrome running on puffin)
+    #   this_mosaic <- terra::merge(this_sprc, algo = 2)
 
-      #save
-      this_diff_mos_name <- paste0(
-        "Difference_",
-        this_year,
-        "_",
-        this_var
-      )
-      names(this_mosaic) <- this_diff_mos_name
-      varnames(this_mosaic) <- this_diff_mos_name
-      terra::writeRaster(
-        this_mosaic,
-        file.path(
-          folder_out_diff,
-          paste0(this_diff_mos_name, ".tif")
-        ),
-        gdal = c("COMPRESS = DEFLATE"),
-        overwrite = TRUE
-      )
-    } # end if difference mosaic
+    #   #save
+    #   this_diff_mos_name <- paste0(
+    #     "Difference_",
+    #     this_year,
+    #     "_",
+    #     this_var
+    #   )
+    #   names(this_mosaic) <- this_diff_mos_name
+    #   varnames(this_mosaic) <- this_diff_mos_name
+    #   terra::writeRaster(
+    #     this_mosaic,
+    #     file.path(
+    #       folder_out_diff,
+    #       paste0(this_diff_mos_name, ".tif")
+    #     ),
+    #     gdal = c("COMPRESS = DEFLATE"),
+    #     overwrite = TRUE
+    #   )
+    # } # end if difference mosaic
 
     if ("legalmax" %in% which_mosaic) {
       this_lm_partname <- paste0(
