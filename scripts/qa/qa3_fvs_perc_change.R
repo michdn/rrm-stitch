@@ -29,7 +29,7 @@ dir.create(folder_out)
 ### Data in --------------------------------------------------------------------
 
 folder_base <- file.path("data", "output", "fvs_mosaic", "baseline")
-folder_legalmax <- file.path("data", "output", "fvs_mosaic", "legalmax")
+folder_lm <- file.path("data", "output", "fvs_mosaic", "legalmax")
 
 files_bl <- list.files(
   path = folder_base,
@@ -89,11 +89,10 @@ for (i in 1:nrow(targets)) {
   this_percchange <- (this_lm - this_bl) / this_bl * 100
 
   this_out_name <- paste0(
-    this_projreg_name,
-    "_percchange_",
-    this_year,
+    "PercentChange_",
+    this_row[["year"]],
     "_",
-    this_var
+    this_row[["fvsvar"]]
   )
   names(this_percchange) <- this_out_name
   varnames(this_percchange) <- this_out_name
