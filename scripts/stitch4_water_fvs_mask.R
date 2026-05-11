@@ -1,6 +1,8 @@
 # Masks water availability with FVS-results pixels
 # i.e. only reporting water results where we are reporting FVS results
 
+# Edited to add legalmax and baseline rasters (in addition to difference) by request
+
 if (!require("pacman")) {
   install.packages("pacman")
 }
@@ -17,16 +19,29 @@ folder_wa <- file.path(
   "output",
   "water_availability"
 )
-aet <- terra::rast(file.path(
+aet_diff <- terra::rast(file.path(
   folder_wa,
   "AET_legalmax_difference_allpixels.tif"
 ))
+aet_lm <- terra::rast(file.path(
+  folder_wa,
+  "AET_legalmax_allpixels.tif"
+))
 
-#Where final treated & baseline rasters live
+# Processed water availabily rasters
+# Pixel-aligned & mosaicked
+folder_aet <- file.path("data", "water_availability", "AET_processed")
+aet_bl <- terra::rast(file.path(folder_aet, "undisturbed_west.tif"))
+
+#Where final treated & baseline FVS rasters live
+# To use as a mask
 folder_mos <- file.path("data", "output", "fvs_mosaic")
 # A final FVS final result to use
 fvs_file <- "Baseline_2026_aboveground_total_live.tif"
 fvs <- terra::rast(file.path(folder_mos, "baseline", fvs_file))
+
+# Create binary FVS-result mask
+fvsbin <- terra::ifel(!is.na(fvs), 1, NA)
 
 ### Extents --------------------------------------------------------------------
 
@@ -52,25 +67,36 @@ fvs <- terra::rast(file.path(folder_mos, "baseline", fvs_file))
 #  more NA/empty rows at bottom.
 #  - AET will be expanded to match FVS result
 
-aet_1crop <- terra::crop(aet, fvs)
-aet_2exd <- terra::extend(aet_1crop, fvs)
+### Extents & Masking ----------------------------------------------------------
 
-### Masking ----------------------------------------------------------------
+crop_extend_mask_aet <- function(this_aet, fvs_eg) {
+  # must be crop and then extend in this order
+  # to match up extents
+  step1 <- terra::crop(this_aet, fvs_eg)
+  step2 <- terra::extend(step1, fvs_eg)
+  #apply fvs mask
+  step3 <- terra::mask(step2, fvs_eg, maskvalues = NA)
+}
 
-# Create binary FVS-result mask
-fvsbin <- terra::ifel(!is.na(fvs), 1, NA)
+aet_diff_ce <- crop_extend_aet(aet_diff, fvsbin)
+aet_lm_ce <- crop_extend_aet(aet_lm, fvsbin)
+aet_bl_ce <- crop_extend_aet(aet_bl, fvsbin)
 
-# Apply mask
-aet_masked <- terra::mask(aet_2exd, fvsbin, maskvalues = NA)
+#save masked raster
+save_aet <- function(this_varname, this_aet) {
+  varnames(this_aet) <- this_varname
+  this_filename <- paste0(this_varname, "_fvsmasked.tif")
+  terra::writeRaster(
+    this_aet,
+    file.path(
+      folder_wa,
+      this_filename
+    ),
+    gdal = c("COMPRESS = DEFLATE"),
+    overwrite = TRUE
+  )
+}
 
-# Save final out
-varnames(aet_masked) <- "AET_legalmax_difference"
-terra::writeRaster(
-  aet_masked,
-  file.path(
-    folder_wa,
-    "AET_legalmax_difference_fvsmasked.tif"
-  ),
-  gdal = c("COMPRESS = DEFLATE"),
-  overwrite = TRUE
-)
+save_aet(aet_diff_ce, "AET_legalmax_difference")
+save_aet(aet_lm_ce, "AET_legalmax")
+save_aet(aet_bl_ce, "AET_baseline")
