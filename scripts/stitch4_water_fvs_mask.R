@@ -78,12 +78,12 @@ crop_extend_mask_aet <- function(this_aet, fvs_eg) {
   step3 <- terra::mask(step2, fvs_eg, maskvalues = NA)
 }
 
-aet_diff_ce <- crop_extend_aet(aet_diff, fvsbin)
-aet_lm_ce <- crop_extend_aet(aet_lm, fvsbin)
-aet_bl_ce <- crop_extend_aet(aet_bl, fvsbin)
+aet_diff_ce <- crop_extend_mask_aet(this_aet = aet_diff, fvs_eg = fvsbin)
+aet_lm_ce <- crop_extend_mask_aet(aet_lm, fvsbin)
+aet_bl_ce <- crop_extend_mask_aet(aet_bl, fvsbin)
 
 #save masked raster
-save_aet <- function(this_varname, this_aet) {
+save_aet <- function(this_aet, this_varname) {
   varnames(this_aet) <- this_varname
   this_filename <- paste0(this_varname, "_fvsmasked.tif")
   terra::writeRaster(
