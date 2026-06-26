@@ -13,7 +13,7 @@ pacman::p_load(
 
 ### Data in --------------------------------------------------------------------
 
-#all pixel water availability
+#all pixel water AET
 folder_wa <- file.path(
   "data",
   "output",
@@ -28,7 +28,7 @@ aet_lm <- terra::rast(file.path(
   "AET_legalmax_allpixels.tif"
 ))
 
-# Processed water availabily rasters
+# Processed water AET rasters
 # Pixel-aligned & mosaicked
 folder_aet <- file.path("data", "water_availability", "AET_processed")
 aet_bl <- terra::rast(file.path(folder_aet, "undisturbed_west.tif"))
