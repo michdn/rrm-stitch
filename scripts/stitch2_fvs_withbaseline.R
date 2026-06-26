@@ -10,6 +10,9 @@
 # 4-6 done, 9 hours.
 # 3 variables, w/ baseline. 5 regions, 5, years: 15 hours.
 
+# Corrected order of saving so that the legalmax being saved in post-masking
+#   with baseline
+
 if (!require("pacman")) {
   install.packages("pacman")
 }
@@ -22,7 +25,7 @@ pacman::p_load(
 
 #also save baseline?
 # masking against legalmax and vice versa for pixel consistency
-save_baseline <- TRUE
+save_baseline <- FALSE
 
 # Regions 1 - 6 possible
 # Regions drive the outer loop
@@ -30,17 +33,24 @@ regions_to_run <- c(1:6)
 
 # FVS variables to run
 # variable are inner loop
+# vars_to_run <- c(
+#   "cbd",
+#   "cbh",
+#   "cc",
+#   "fbfm",
+#   "th"
+# )
 vars_to_run <- c(
-  #"aboveground_total_live",
-  "mcuft",
-  #"pot_smoke_sev",
-  "tcuft" #,
-  #"tot_flame_sev"
+  "aboveground_total_live",
+  "pot_smoke_sev",
+  "tot_flame_sev"
 )
+#  "mcuft"
+#  "tcuft"
 
 # Years to run
 # Secondary inner loop after variable
-years_to_run <- c(2026) #, 2031, 2036, 2041, 2046)
+years_to_run <- c(2026, 2031, 2036, 2041, 2046)
 
 #output folders
 folder_out_base <- file.path("data", "output", "fvs_region")
@@ -196,26 +206,6 @@ for (i in seq_along(regions_to_run)) {
       # Treatment stitching rules
       this_legalmax <- terra::ifel(this_pad %in% c(1, 2), this_burn, this_thin)
 
-      #Saving out
-      this_out_name <- paste0(
-        this_projreg_name,
-        "_legalmax_",
-        this_year,
-        "_",
-        this_var
-      )
-      names(this_legalmax) <- this_out_name
-      varnames(this_legalmax) <- this_out_name
-      terra::writeRaster(
-        this_legalmax,
-        file.path(
-          this_folder_out_lm,
-          paste0(this_out_name, ".tif")
-        ),
-        gdal = c("COMPRESS = DEFLATE"),
-        overwrite = TRUE
-      )
-
       # Get baseline
       this_baseline <- terra::rast(file.path(
         this_folder_fvs,
@@ -257,6 +247,26 @@ for (i in seq_along(regions_to_run)) {
           overwrite = TRUE
         )
       }
+
+      #Saving out
+      this_out_name <- paste0(
+        this_projreg_name,
+        "_legalmax_",
+        this_year,
+        "_",
+        this_var
+      )
+      names(this_legalmax) <- this_out_name
+      varnames(this_legalmax) <- this_out_name
+      terra::writeRaster(
+        this_legalmax,
+        file.path(
+          this_folder_out_lm,
+          paste0(this_out_name, ".tif")
+        ),
+        gdal = c("COMPRESS = DEFLATE"),
+        overwrite = TRUE
+      )
 
       end_time_layer <- Sys.time()
 

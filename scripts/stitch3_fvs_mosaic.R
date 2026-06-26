@@ -20,20 +20,21 @@ pacman::p_load(
 # "diff" is the subtracted layer: legalmax - baseline. DEPRECATED.
 # "baseline" is the baseline layers (from pixel matched/consistent intermediates)
 # c("legalmax", "baseline")
-which_mosaic <- c("baseline", "legalmax")
+which_mosaic <- c("legalmax")
 
 # FVS variables to run
 vars_to_run <- c(
-  #"aboveground_total_live",
-  "mcuft",
-  #"pot_smoke_sev",
-  "tcuft" #,
-  #"tot_flame_sev"
+  "aboveground_total_live",
+  #"mcuft",
+  "pot_smoke_sev",
+  #"tcuft" #,
+  "tot_flame_sev"
+  #"bdft"
 )
 
 # Years to run
 #c(2026, 2031, 2036, 2041, 2046)
-years_to_run <- c(2026)
+years_to_run <- c(2026, 2031, 2036, 2041, 2046)
 
 #output folders
 folder_out <- file.path("data", "output", "fvs_mosaic")
