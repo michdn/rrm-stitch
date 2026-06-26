@@ -16,17 +16,24 @@ pacman::p_load(
 # Note that R6 does not have a thin guide because there's only 1 thin treatment
 #  will have exception code to just copy over existing to new folder
 #  (Rather than trying to deal with multiple source folders during stitching)
-regions_to_run <- c(1, 2, 3, 4, 5, 6)
+regions_to_run <- c(6) #c(1, 2, 3, 4, 5, 6)
 
 # FVS variables to run
 # variable are inner loop
 vars_to_run <- c(
-  #"aboveground_total_live",
-  "mcuft",
-  #"pot_smoke_sev",
-  "tcuft" #,
-  #"tot_flame_sev"
+  "cbd",
+  "cbh",
+  "cc",
+  "fbfm",
+  "th"
 )
+# c(
+#   #"aboveground_total_live",
+#   #"mcuft",
+#   #"pot_smoke_sev",
+#   #"tcuft" #,
+#   #"tot_flame_sev"
+# )
 
 # Years to run
 # Secondary inner loop after variable
