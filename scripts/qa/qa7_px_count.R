@@ -19,13 +19,17 @@ stamp <- format(Sys.time(), "%Y%m%d")
 folder_mos <- file.path("data", "output", "fvs_mosaic")
 
 target_files <- list.files(
-  path = folder_mos,
+  path = c(
+    file.path(folder_mos, "baseline"),
+    file.path(folder_mos, "legalmax")
+  ),
+  #path = folder_mos,
   pattern = paste0(file_pattern, ".*\\.tif$"),
   recursive = TRUE,
   full.names = TRUE
 )
 
-#FIXME. Next time remove subfolder 'legalmax_extrapixels'
+#Next time remove subfolder 'legalmax_extrapixels'. -- Done with new paths
 
 ### Target & loop for stats ----------------------------------------------------
 
