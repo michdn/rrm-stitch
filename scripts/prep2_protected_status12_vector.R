@@ -67,19 +67,30 @@ sf::write_sf(
 #  (this was used to reproject water results, so everything is pixel-aligned)
 # Keeping protected status 1 or 2 (instead of collapsing to single value)
 #  May be wanted in future, but not part of original rules.
+
+# IMPORTANT! Must make field numeric before rasterization, otherwise it
+# will treat it as a categorical,
+#  and the 1 & 2 values become 0 & 1 values when you save.
+pad12_numeric <- pad12_5070 %>%
+  tibble::as_tibble() %>%
+  dplyr::mutate(GAP_Sts = as.numeric(GAP_Sts))
+
+#rasterize
 pad12_r <- terra::rasterize(
-  pad12_5070,
+  pad12_numeric,
   tmr1,
   field = "GAP_Sts",
-  #in case of any overlap, which there should not be, take highest priority value
+  #in case of any overlap, take highest priority value
   fun = "min",
   #if ANY part of pixel is protected, then protected
   touches = TRUE
 )
 
+varnames(pad12_r) <- "protected_status"
+names(pad12_r) <- "protected_status"
 terra::writeRaster(
   pad12_r,
-  file.path("data", "protected", "protected_status12.tif"),
+  file.path("data", "protected", "protected_status12_20260727.tif"),
   gdal = c("COMPRESS = DEFLATE"),
   overwrite = TRUE
 )
