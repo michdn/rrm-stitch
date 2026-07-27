@@ -60,6 +60,7 @@ pcw_freq %>% tibble::as_tibble() %>% dplyr::select(-layer)
 
 save_r <- function(this_r, this_varname) {
   varnames(this_r) <- this_varname
+  names(this_r) <- this_varname #forgot this step in initial run
   this_filename <- paste0(this_varname, "_fvsmasked.tif")
   terra::writeRaster(
     this_r,
