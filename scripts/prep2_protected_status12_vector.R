@@ -15,7 +15,8 @@ if (!require("pacman")) {
 }
 pacman::p_load(
   tidyverse,
-  sf
+  sf,
+  terra
 )
 
 ### Data in --------------------------------------------------------------------
@@ -33,7 +34,7 @@ sf::st_layers(file.path(
 ))
 #layer name = "PADUS4_1VectorAnalysis_PADUS_Only_Simp_SingP"
 
-pad <- sf::st_read(
+pad <- sf::read_sf(
   dsn = file.path(
     "data",
     "protected",
@@ -46,7 +47,12 @@ pad <- sf::st_read(
 
 ### Filter, project protected --------------------------------------------------
 
+# IMPORTANT! Must make field numeric before rasterization, otherwise it
+# will treat it as a categorical,
+#  and the e.g. 1 & 2 values become 0 & 1 values when you save.
 pad12 <- pad %>%
+  # values "4" "3" "2" "1"
+  dplyr::mutate(GAP_Sts = as.numeric(GAP_Sts)) %>%
   dplyr::filter(GAP_Sts %in% c(1, 2))
 
 #has 292176 features
@@ -58,7 +64,7 @@ pad12_5070 <- sf::st_transform(pad12, crs = "EPSG:5070")
 #save intermediate
 sf::write_sf(
   pad12_5070,
-  file.path("data", "protected", "protected_status12_5070.gpkg")
+  file.path("data", "protected", "protected_status12_5070_20260727.gpkg")
 )
 
 ### Rasterize ------------------------------------------------------------------
@@ -68,16 +74,9 @@ sf::write_sf(
 # Keeping protected status 1 or 2 (instead of collapsing to single value)
 #  May be wanted in future, but not part of original rules.
 
-# IMPORTANT! Must make field numeric before rasterization, otherwise it
-# will treat it as a categorical,
-#  and the 1 & 2 values become 0 & 1 values when you save.
-pad12_numeric <- pad12_5070 %>%
-  tibble::as_tibble() %>%
-  dplyr::mutate(GAP_Sts = as.numeric(GAP_Sts))
-
 #rasterize
 pad12_r <- terra::rasterize(
-  pad12_numeric,
+  pad12_5070,
   tmr1,
   field = "GAP_Sts",
   #in case of any overlap, take highest priority value
@@ -86,8 +85,7 @@ pad12_r <- terra::rasterize(
   touches = TRUE
 )
 
-varnames(pad12_r) <- "protected_status"
-names(pad12_r) <- "protected_status"
+varnames(pad12_r) <- names(pad12_r) #GAP_Sts
 terra::writeRaster(
   pad12_r,
   file.path("data", "protected", "protected_status12_20260727.tif"),

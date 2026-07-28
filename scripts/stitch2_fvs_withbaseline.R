@@ -77,7 +77,11 @@ readr::write_csv(
 
 # Rasterized protected areas, status 1 or 2
 # Pixel aligned to treemap/FVS
-pad12_r <- terra::rast(file.path("data", "protected", "protected_status12.tif"))
+pad12_r <- terra::rast(file.path(
+  "data",
+  "protected",
+  "protected_status12_20260727.tif"
+))
 
 # Folder where the FVS results have been copied into from rem share
 # for prescription burn (and baseline) (and raw thin treatments)

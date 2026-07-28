@@ -21,7 +21,11 @@ dir.create(folder_out, recursive = TRUE)
 
 # Rasterized protected areas, status 1 or 2
 # Pixel aligned to treemap/FVS
-pad12_r <- terra::rast(file.path("data", "protected", "protected_status12.tif"))
+pad12_r <- terra::rast(file.path(
+  "data",
+  "protected",
+  "protected_status12_20260727.tif"
+))
 
 # Processed water availabily rasters
 # Pixel-aligned & mosaicked
