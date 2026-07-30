@@ -20,15 +20,15 @@ pacman::p_load(
 # "diff" is the subtracted layer: legalmax - baseline. DEPRECATED.
 # "baseline" is the baseline layers (from pixel matched/consistent intermediates)
 # c("legalmax", "baseline")
-which_mosaic <- c("legalmax")
+which_mosaic <- c("legalmax", "baseline")
 
 # FVS variables to run
 vars_to_run <- c(
   "aboveground_total_live",
-  #"mcuft",
   "pot_smoke_sev",
-  #"tcuft" #,
   "tot_flame_sev"
+  #"mcuft",
+  #"tcuft",
   #"bdft"
 )
 

@@ -5,10 +5,9 @@
 
 # Uses combined thin results from prep4_fvs_thin_combine.R
 
-# 5 variables, 5 years. no baseline consistency:
-# 1 & 2 done, 6 hours.
-# 4-6 done, 9 hours.
+# time estimate:
 # 3 variables, w/ baseline. 5 regions, 5, years: 15 hours.
+#  adding baseline is a minor difference in time (just a save out)
 
 # Corrected order of saving so that the legalmax being saved in post-masking
 #   with baseline
@@ -25,7 +24,7 @@ pacman::p_load(
 
 #also save baseline?
 # masking against legalmax and vice versa for pixel consistency
-save_baseline <- FALSE
+save_baseline <- TRUE
 
 # Regions 1 - 6 possible
 # Regions drive the outer loop
