@@ -14,6 +14,12 @@ file_pattern <- ("Legalmax|Baseline")
 
 stamp <- format(Sys.time(), "%Y%m%d")
 
+folder_out <- file.path(
+  "data",
+  "qa"
+)
+dir.create(folder_out, recursive = TRUE)
+
 ### Data in --------------------------------------------------------------------
 
 folder_mos <- file.path("data", "output", "fvs_mosaic")
@@ -69,9 +75,7 @@ for (i in 1:nrow(targets)) {
 readr::write_csv(
   all_stats,
   file.path(
-    "data",
-    "output",
-    "qa",
+    folder_out,
     paste0("notna_stats", stamp, ".csv")
   )
 )

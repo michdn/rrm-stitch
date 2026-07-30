@@ -38,6 +38,28 @@ pc_water <- (-1 * aet_diff) / aet_bl * 100
 #freq table, rounded to tens digit
 pcw_freq <- terra::freq(pc_water, digits = -1)
 pcw_freq %>% tibble::as_tibble() %>% dplyr::select(-layer)
+# # A tibble: 17 × 2
+#    value     count
+#    <dbl>     <dbl>
+#  1  -240         1
+#  2   -40         1
+#  3   -30         3
+#  4   -20         3
+#  5   -10         4
+#  6     0  42852965
+#  7    10  71300289
+#  8    20 409391200
+#  9    30 361622077
+# 10    40   2122839
+# 11    50     24601
+# 12    60        68
+# 13    70         1
+# 14    80         1
+# 15   120         1
+# 16   130         1
+# 17   190         1
+
+# ORIGINAL ProtectStatus2only bug:
 # # A tibble: 16 x 2
 #    value     count
 #    <dbl>     <dbl>

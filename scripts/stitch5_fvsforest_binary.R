@@ -34,3 +34,10 @@ terra::writeRaster(
   gdal = c("COMPRESS = DEFLATE"),
   overwrite = TRUE
 )
+
+#check. for 20260729 runs, should be 887732435 (value 1)
+bin_freq <- terra::freq(fvs_bin)
+
+#   layer value      count
+# 1     1     0 5098309821
+# 2     1     1  887732435

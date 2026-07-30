@@ -20,14 +20,14 @@ pacman::p_load(
 ### Settings -------------------------------------------------------------------
 
 #vars to run, just in case we need to use this for any other special vars
-vars_to_run <- c("bdft")
+vars_to_run <- c("bdft", "mcuft", "tcuft")
 years_to_run <- c(2026)
 regions_to_run <- c(1:6)
 
 # var to use for masking
 # Since we aren't creating legalmax, we need to pull some prior completed results
-#  to mask to the same pixels.
-eg_mask_var <- "mcuft"
+#  to mask to the same pixels. REGION-level results
+eg_mask_var <- "aboveground_total_live"
 
 #timestamp
 stamp <- format(Sys.time(), "%Y%m%d%H%M")
@@ -47,7 +47,7 @@ log_setup <- tibble::tribble(
 )
 readr::write_csv(
   log_setup,
-  file = file.path(folder_logs, paste0("log_stitch7_", stamp, "_setup.csv"))
+  file = file.path(folder_logs, paste0("log_stitch2b_", stamp, "_setup.csv"))
 )
 
 ### Data in --------------------------------------------------------------------
