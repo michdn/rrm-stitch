@@ -27,6 +27,12 @@ pad12_r <- terra::rast(file.path(
   "protected",
   "protected_status12_20260727.tif"
 ))
+#freq(pad12_r)
+#   layer value     count
+# 1     1     1 266447166
+# 2     1     2 276701695
+# 266447166 + 276701695
+# [1] 543148861
 
 # Final mask
 # Where final treated & baseline rasters live
@@ -53,7 +59,7 @@ all.equal(ext(pad12_r2), ext(fvsbin))
 tx_pad <- terra::ifel(pad12_r2 %in% c(1, 2), burn_value, thin_value)
 tx_pad
 plot(pad12_r2)
-plot(tx_pad)
+plot(tx_pad) #will have 2 everywhere that isn't 1.
 
 # limit to final FVS results
 tx_key <- terra::mask(tx_pad, fvsbin, maskvalues = NA)
@@ -62,6 +68,15 @@ tx_key
 
 names(tx_key) <- "tx_key"
 varnames(tx_key) <- "tx_key"
+
+tx_freq <- terra::freq(tx_key)
+tx_freq
+#   layer value     count
+# 1     1     1 149335602
+# 2     1     2 738396833
+#sum up chk pixel counts. 887732435
+tx_freq$count %>% sum()
+#[1] 887732435
 
 terra::writeRaster(
   tx_key,
