@@ -1,7 +1,7 @@
-# Masks water availability with FVS-results pixels
+# Masks AET with FVS-results pixels
 # i.e. only reporting water results where we are reporting FVS results
 
-# Edited to add legalmax and baseline rasters (in addition to difference) by request
+# Edited to add legalmax and baseline rasters
 
 if (!require("pacman")) {
   install.packages("pacman")
@@ -10,6 +10,23 @@ pacman::p_load(
   tidyverse,
   terra
 )
+
+### Function -------------------------------------------------------------------
+
+#save masked raster
+save_aet <- function(this_aet, this_varname, folder_out = folder_wa) {
+  varnames(this_aet) <- this_varname
+  this_filename <- paste0(this_varname, "_fvsmasked.tif")
+  terra::writeRaster(
+    this_aet,
+    file.path(
+      folder_out,
+      this_filename
+    ),
+    gdal = c("COMPRESS = DEFLATE"),
+    overwrite = TRUE
+  )
+}
 
 ### Data in --------------------------------------------------------------------
 
@@ -42,6 +59,9 @@ fvs <- terra::rast(file.path(folder_mos, "baseline", fvs_file))
 
 # Create binary FVS-result mask
 fvsbin <- terra::ifel(!is.na(fvs), 1, NA)
+
+#double check 887732435
+terra::global(fvsbin, "notNA")
 
 ### Extents --------------------------------------------------------------------
 
@@ -78,24 +98,34 @@ crop_extend_mask_aet <- function(this_aet, fvs_eg) {
   step3 <- terra::mask(step2, fvs_eg, maskvalues = NA)
 }
 
-aet_diff_ce <- crop_extend_mask_aet(this_aet = aet_diff, fvs_eg = fvsbin)
-aet_lm_ce <- crop_extend_mask_aet(aet_lm, fvsbin)
 aet_bl_ce <- crop_extend_mask_aet(aet_bl, fvsbin)
 
-#save masked raster
-save_aet <- function(this_aet, this_varname) {
-  varnames(this_aet) <- this_varname
-  this_filename <- paste0(this_varname, "_fvsmasked.tif")
-  terra::writeRaster(
-    this_aet,
-    file.path(
-      folder_wa,
-      this_filename
-    ),
-    gdal = c("COMPRESS = DEFLATE"),
-    overwrite = TRUE
-  )
-}
+# #double check 887732435
+# terra::global(aet_bl_ce, "notNA")
+# # 887314247? fewer pixels than fvs. 418188 where?
+# aetbl_bin10 <- terra::ifel(!is.na(aet_bl_ce), 1, 0)
+# fvs_bin10 <- terra::ifel(!is.na(fvs), 1, 0)
+# diff_aetbl_fvs <- aetbl_bin10 - fvs_bin10
+# # 1 aetbl but not fvs, -1 for fvs but not aet
+# freq(diff_aetbl_fvs)
+# # -1: 418188. Perhaps nothing can do. Check where in QGIS.
+# aetbl_fvs <- terra::mask(
+#   diff_aetbl_fvs,
+#   diff_aetbl_fvs,
+#   maskvalues = 0,
+#   updatevalue = NA
+# )
+# save_aet(aetbl_fvs, "AET_FVS_binary_diff", folder_out = file.path("data", "qa"))
+# # along roads, rivers, etc.
+# # something to note and accept
+
+aet_lm_ce <- crop_extend_mask_aet(aet_lm, fvsbin)
+# #double check
+# terra::global(aet_lm_ce, "notNA")
+
+aet_diff_ce <- crop_extend_mask_aet(this_aet = aet_diff, fvs_eg = fvsbin)
+# #double check
+# terra::global(aet_diff_ce, "notNA")
 
 save_aet(aet_diff_ce, "AET_legalmax_difference")
 save_aet(aet_lm_ce, "AET_legalmax")
