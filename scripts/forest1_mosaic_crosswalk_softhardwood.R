@@ -39,11 +39,11 @@ if (!length(files_ft) == 6) {
 # To use as a mask
 folder_mos <- file.path("data", "output", "fvs_mosaic")
 # # A final FVS final result to use
-# fvs_file <- "Baseline_2026_aboveground_total_live.tif"
-# fvs <- terra::rast(file.path(folder_mos, "baseline", fvs_file))
-# # Create binary FVS-result mask
-# fvsbin <- terra::ifel(!is.na(fvs), 1, NA)
-#save this for next time
+fvs_file <- "Baseline_2026_aboveground_total_live.tif"
+fvs <- terra::rast(file.path(folder_mos, "baseline", fvs_file))
+# Create binary FVS-result mask
+fvsbin <- terra::ifel(!is.na(fvs), 1, NA)
+# #save this for next time
 # terra::writeRaster(
 #   fvsbin,
 #   file.path(folder_mos, "fvs_results_mask_bl2026atl.tif"),
@@ -52,7 +52,8 @@ folder_mos <- file.path("data", "output", "fvs_mosaic")
 #   datatype = "INT2S",
 #   overwrite = TRUE
 # )
-fvsbin <- terra::rast(file.path(folder_mos, "fvs_results_mask_bl2026atl.tif"))
+#fvsbin <- terra::rast(file.path(folder_mos, "fvs_results_mask_bl2026atl.tif"))
+#all.equal(fvsbin1, fvsbin)
 
 ### Crosswalk & rcl prep -------------------------------------------------------
 
